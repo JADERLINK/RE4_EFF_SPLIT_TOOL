@@ -8,25 +8,35 @@ namespace EFF_SPLIT
 {
     internal static class Repack
     {
-        public static void RepackFilePS2(string file) 
+        public static void RepackFilePS2(string fileFullName) 
         {
-            RepackFile(file, false);
+            RepackFile(fileFullName, false);
         }
 
-        public static void RepackFileUHD(string file)
+        public static void RepackFileUHD(string fileFullName)
         {
-            RepackFile(file, true);
+            RepackFile(fileFullName, true);
         }
 
-        private static void RepackFile(string file, bool IsUHD)
+        private static void RepackFile(string fileFullName, bool IsUHD)
         {
-            string filename = Path.GetFileNameWithoutExtension(file);
-            string directory = Path.GetDirectoryName(file);
+            string baseDirectory = Path.GetDirectoryName(fileFullName);
+            string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
 
-            string effBlobPath = $"{directory}/{filename}/{filename}.EFFBLOB";
+            string baseDirectoryPath = Path.Combine(baseDirectory, baseFileName);
+
+            string pattern = "^(00)([0-9]{2})$";
+            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+            if (regex.IsMatch(baseFileName))
+            {
+                baseDirectoryPath = Path.Combine(baseDirectory, baseFileName + "_EFF");
+            }
+
+            string effBlobPath = Path.Combine(baseDirectoryPath, $"{baseFileName}.EFFBLOB");
             if (!File.Exists(effBlobPath))
             {
-                Console.WriteLine($"{filename}.EFFBLOB, Does not exist.");
+                Console.WriteLine($"{baseFileName}.EFFBLOB, Does not exist.");
                 return;
             }
 
@@ -34,7 +44,7 @@ namespace EFF_SPLIT
             uint Magic = br.ReadUInt32(); //sempre 0x0B
             if (Magic != 0x0B)
             {
-                Console.WriteLine($"{filename}.EFFBLOB, Invalid file!");
+                Console.WriteLine($"{baseFileName}.EFFBLOB, Invalid file!");
                 return;
             }
 
@@ -62,11 +72,13 @@ namespace EFF_SPLIT
             tables.Table07_Effect_0_Type = Separate.Effect_Type(br, offset_7_Effect_0_Type, out _);
             tables.Table08_Effect_1_Type = Separate.Effect_Type(br, offset_8_Effect_1_Type, out _);
 
-            ExtraRepack extra = new ExtraRepack();
-            extra.Table05Directory = $"{directory}/{filename}/Effect TPL/";
-            extra.Table10Directory = $"{directory}/{filename}/Effect Models/";
+            br.Close();
 
-            var eff = new FileInfo($"{directory}/{filename}.EFF").Create();
+            ExtraRepack extra = new ExtraRepack();
+            extra.Table05Directory = Path.Combine(baseDirectoryPath, "Effect TPL");
+            extra.Table10Directory = Path.Combine(baseDirectoryPath, "Effect Models");
+
+            var eff = new FileInfo(Path.Combine(baseDirectory, $"{baseFileName}.EFF")).Create();
             Join join = new Join(tables);
             join.WriteTable05 = extra.Table05;
             join.WriteTable10 = extra.Table10;
@@ -89,7 +101,7 @@ namespace EFF_SPLIT
 
                 while (asFile)
                 {
-                    string tplPath = Table05Directory + iCount.ToString("D") + ".TPL";
+                    string tplPath = Path.Combine(Table05Directory, iCount.ToString("D") + ".TPL");
 
                     if (File.Exists(tplPath))
                     {
@@ -120,7 +132,7 @@ namespace EFF_SPLIT
                     bw.Write(WriteOffset);
                     bw.BaseStream.Position = nextOffset;
 
-                    string tplPath = Table05Directory + i.ToString("D") + ".TPL";
+                    string tplPath = Path.Combine(Table05Directory, i.ToString("D") + ".TPL");
                     FileInfo fileinfo = new FileInfo(tplPath);
 
                     var fileStream = fileinfo.OpenRead();
@@ -150,8 +162,8 @@ namespace EFF_SPLIT
 
                 while (asFile)
                 {
-                    string binPath = Table10Directory + iCount.ToString("D") + ".BIN";
-                    string tplPath = Table10Directory + iCount.ToString("D") + ".TPL";
+                    string binPath = Path.Combine(Table10Directory, iCount.ToString("D") + ".BIN");
+                    string tplPath = Path.Combine(Table10Directory, iCount.ToString("D") + ".TPL");
 
                     if (File.Exists(tplPath) && File.Exists(binPath))
                     {
@@ -192,7 +204,7 @@ namespace EFF_SPLIT
 
                     uint BinOffset = (uint)bw.BaseStream.Position;
                     {
-                        string binPath = Table10Directory + i.ToString("D") + ".BIN";
+                        string binPath = Path.Combine(Table10Directory, i.ToString("D") + ".BIN");
                         FileInfo fileinfo = new FileInfo(binPath);
 
                         var fileStream = fileinfo.OpenRead();
@@ -210,7 +222,7 @@ namespace EFF_SPLIT
 
                     uint TplOffset = (uint)bw.BaseStream.Position;
                     {
-                        string tplPath = Table10Directory + i.ToString("D") + ".TPL";
+                        string tplPath = Path.Combine(Table10Directory, i.ToString("D") + ".TPL");
                         FileInfo fileinfo = new FileInfo(tplPath);
 
                         var fileStream = fileinfo.OpenRead();

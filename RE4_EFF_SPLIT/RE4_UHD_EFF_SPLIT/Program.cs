@@ -13,7 +13,7 @@ namespace RE4_UHD_EFF_SPLIT
         {
             Console.WriteLine("# RE4 UHD EFF SPLIT");
             Console.WriteLine("# By JADERLINK");
-            Console.WriteLine("# VERSION 1.0.0 (2024-08-05)");
+            Console.WriteLine("# VERSION 1.0.1 (2024-08-17)");
             Console.WriteLine("# youtube.com/@JADERLINK");
 
             if (args.Length == 0)
@@ -25,26 +25,25 @@ namespace RE4_UHD_EFF_SPLIT
             }
             else if (args.Length >= 1 && File.Exists(args[0]))
             {
-                string file = args[0];
-                FileInfo info = null;
+                FileInfo fileInfo = null;
 
                 try
                 {
-                    info = new FileInfo(file);
+                    fileInfo = new FileInfo(args[0]);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error in the path: " + Environment.NewLine + ex);
                 }
-                if (info != null)
+                if (fileInfo != null)
                 {
-                    Console.WriteLine("File: " + info.Name);
+                    Console.WriteLine("File: " + fileInfo.Name);
 
-                    if (info.Extension.ToUpperInvariant() == ".EFF")
+                    if (fileInfo.Extension.ToUpperInvariant() == ".EFF")
                     {
                         try
                         {
-                            EFF_SPLIT.Extract.ExtractFileUHD(file);
+                            EFF_SPLIT.Extract.ExtractFileUHD(fileInfo.FullName);
                         }
                         catch (Exception ex)
                         {
@@ -52,11 +51,11 @@ namespace RE4_UHD_EFF_SPLIT
                         }
 
                     }
-                    else if (info.Extension.ToUpperInvariant() == ".IDX_UHD_EFF_SPLIT")
+                    else if (fileInfo.Extension.ToUpperInvariant() == ".IDX_UHD_EFF_SPLIT")
                     {
                         try
                         {
-                            EFF_SPLIT.Repack.RepackFileUHD(file);
+                            EFF_SPLIT.Repack.RepackFileUHD(fileInfo.FullName);
                         }
                         catch (Exception ex)
                         {
@@ -65,7 +64,7 @@ namespace RE4_UHD_EFF_SPLIT
                     }
                     else
                     {
-                        Console.WriteLine("The extension is not valid: " + info.Extension);
+                        Console.WriteLine("The extension is not valid: " + fileInfo.Extension);
                     }
                 }
 

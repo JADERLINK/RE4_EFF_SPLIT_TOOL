@@ -7,12 +7,12 @@ namespace EFF_SPLIT
 {
     internal static class Extract
     {
-        public static void ExtractFilePS2(string file) 
+        public static void ExtractFilePS2(string fileFullName) 
         {
-            ExtractFile(file, false);
-            string filename = Path.GetFileNameWithoutExtension(file);
-            string directory = Path.GetDirectoryName(file);
-            var IDX_EFF_SPLIT = new FileInfo($"{directory}/{filename}.IDX_PS2_EFF_SPLIT").CreateText();
+            ExtractFile(fileFullName, false);
+            string baseDirectory = Path.GetDirectoryName(fileFullName);
+            string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
+            var IDX_EFF_SPLIT = new FileInfo(Path.Combine(baseDirectory, $"{baseFileName}.IDX_PS2_EFF_SPLIT")).CreateText();
             IDX_EFF_SPLIT.WriteLine("# github.com/JADERLINK/RE4_EFF_SPLIT_TOOL");
             IDX_EFF_SPLIT.WriteLine("# RE4 PS2 EFF SPLIT");
             IDX_EFF_SPLIT.WriteLine("# By JADERLINK");
@@ -20,12 +20,12 @@ namespace EFF_SPLIT
             IDX_EFF_SPLIT.Close();
         }
 
-        public static void ExtractFileUHD(string file)
+        public static void ExtractFileUHD(string fileFullName)
         {
-            ExtractFile(file, true);
-            string filename = Path.GetFileNameWithoutExtension(file);
-            string directory = Path.GetDirectoryName(file);
-            var IDX_EFF_SPLIT = new FileInfo($"{directory}/{filename}.IDX_UHD_EFF_SPLIT").CreateText();
+            ExtractFile(fileFullName, true);
+            string baseDirectory = Path.GetDirectoryName(fileFullName);
+            string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
+            var IDX_EFF_SPLIT = new FileInfo(Path.Combine(baseDirectory, $"{baseFileName}.IDX_UHD_EFF_SPLIT")).CreateText();
             IDX_EFF_SPLIT.WriteLine("# github.com/JADERLINK/RE4_EFF_SPLIT_TOOL");
             IDX_EFF_SPLIT.WriteLine("# RE4 UHD EFF SPLIT");
             IDX_EFF_SPLIT.WriteLine("# By JADERLINK");
@@ -33,16 +33,27 @@ namespace EFF_SPLIT
             IDX_EFF_SPLIT.Close();
         }
 
-        private static void ExtractFile(string file, bool IsUHD) 
+        private static void ExtractFile(string fileFullName, bool IsUHD) 
         {
-            string filename = Path.GetFileNameWithoutExtension(file);
-            string directory = Path.GetDirectoryName(file);
+            string baseDirectory = Path.GetDirectoryName(fileFullName);
+            string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
 
-            BinaryReader br = new BinaryReader(File.OpenRead(file));
+            string baseDirectoryPath = Path.Combine(baseDirectory, baseFileName);
+
+            string pattern = "^(00)([0-9]{2})$";
+            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+            if (regex.IsMatch(baseFileName))
+            {
+                baseDirectoryPath = Path.Combine(baseDirectory, baseFileName + "_EFF");
+            }
+
+            BinaryReader br = new BinaryReader(File.OpenRead(fileFullName));
             uint Magic = br.ReadUInt32(); //sempre 0x0B
             if (Magic != 0x0B)
             {
                 Console.WriteLine("Invalid file!");
+                br.Close();
                 return;
             }
 
@@ -86,32 +97,46 @@ namespace EFF_SPLIT
                 table10 = UhdExtract.ExtractTable10_MODEL(br, offset_10_Data_Offset);
             }
 
+            br.Close();
+
             //grava os arquivos
 
+            string Effect_TPL_Path = Path.Combine(baseDirectoryPath, "Effect TPL");
+            string Effect_Models_Path = Path.Combine(baseDirectoryPath, "Effect Models");
+
             // Create folder
-            Directory.CreateDirectory(directory + "/" + filename);
-            Directory.CreateDirectory(directory + "/" + filename + "/Effect TPL");
-            Directory.CreateDirectory(directory + "/" + filename + "/Effect Models");
+            try
+            {
+                Directory.CreateDirectory(baseDirectoryPath);
+                Directory.CreateDirectory(Effect_TPL_Path);
+                Directory.CreateDirectory(Effect_Models_Path);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error creating directory: " + baseDirectoryPath);
+                Console.WriteLine(ex);
+            }
+
 
             for (int i = 0; i < table05.Length; i++)
             {
-                BinaryWriter bwTPL = new BinaryWriter(File.Create($"{directory}/{filename}/Effect TPL/" + i.ToString("D") + ".TPL"));
+                BinaryWriter bwTPL = new BinaryWriter(File.Create(Path.Combine(Effect_TPL_Path, i.ToString("D") + ".TPL")));
                 bwTPL.Write(table05[i].Arr);
                 bwTPL.Close();
             }
 
             for (int i = 0; i < table10.Length; i++)
             {
-                BinaryWriter bwBIN = new BinaryWriter(File.Create($"{directory}/{filename}/Effect Models/" + i.ToString("D") + ".BIN"));
+                BinaryWriter bwBIN = new BinaryWriter(File.Create(Path.Combine(Effect_Models_Path, i.ToString("D") + ".BIN")));
                 bwBIN.Write(table10[i].BIN.Arr);
                 bwBIN.Close();
-                BinaryWriter bwTPL = new BinaryWriter(File.Create($"{directory}/{filename}/Effect Models/" + i.ToString("D") + ".TPL"));
+                BinaryWriter bwTPL = new BinaryWriter(File.Create(Path.Combine(Effect_Models_Path, i.ToString("D") + ".TPL")));
                 bwTPL.Write(table10[i].TPL.Arr);
                 bwTPL.Close();
             }
 
             //EFFBLOB
-            var effBlob = new FileInfo($"{directory}/{filename}/{filename}.EFFBLOB").Create();
+            var effBlob = new FileInfo(Path.Combine(baseDirectoryPath, $"{baseFileName}.EFFBLOB")).Create();
             Join join = new Join(tables);
             join.Create_EFF_File(effBlob, true);
             effBlob.Close();
