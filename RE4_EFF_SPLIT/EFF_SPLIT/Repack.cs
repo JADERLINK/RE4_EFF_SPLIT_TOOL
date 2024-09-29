@@ -44,6 +44,7 @@ namespace EFF_SPLIT
             uint Magic = br.ReadUInt32(); //sempre 0x0B
             if (Magic != 0x0B)
             {
+                br.Close();
                 Console.WriteLine($"{baseFileName}.EFFBLOB, Invalid file!");
                 return;
             }

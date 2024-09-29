@@ -9,10 +9,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RE4_UHD_EFF_SPLIT", "RE4_UH
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EFF_SPLIT", "EFF_SPLIT\EFF_SPLIT.shproj", "{8B735260-7953-4F78-B039-C58CEDA27B94}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RE4_PS4NS_EFF_SPLIT", "RE4_PS4NS_EFF_SPLIT\RE4_PS4NS_EFF_SPLIT.csproj", "{A8223BB7-8234-4B98-9500-3AA267D421BE}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		EFF_SPLIT\EFF_SPLIT.projitems*{8b735260-7953-4f78-b039-c58ceda27b94}*SharedItemsImports = 13
 		EFF_SPLIT\EFF_SPLIT.projitems*{94e72f26-a767-4a27-b2d3-2b2b59de326b}*SharedItemsImports = 4
+		EFF_SPLIT\EFF_SPLIT.projitems*{a8223bb7-8234-4b98-9500-3aa267d421be}*SharedItemsImports = 4
 		EFF_SPLIT\EFF_SPLIT.projitems*{cca17e4a-c394-404d-b4cd-ec6d7b7c7db0}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +31,10 @@ Global
 		{94E72F26-A767-4A27-B2D3-2B2B59DE326B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94E72F26-A767-4A27-B2D3-2B2B59DE326B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94E72F26-A767-4A27-B2D3-2B2B59DE326B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8223BB7-8234-4B98-9500-3AA267D421BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8223BB7-8234-4B98-9500-3AA267D421BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8223BB7-8234-4B98-9500-3AA267D421BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8223BB7-8234-4B98-9500-3AA267D421BE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

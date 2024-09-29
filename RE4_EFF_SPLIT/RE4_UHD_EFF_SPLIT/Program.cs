@@ -11,9 +11,11 @@ namespace RE4_UHD_EFF_SPLIT
     {
         static void Main(string[] args)
         {
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+
             Console.WriteLine("# RE4 UHD EFF SPLIT");
             Console.WriteLine("# By JADERLINK");
-            Console.WriteLine("# VERSION 1.0.1 (2024-08-17)");
+            Console.WriteLine("# VERSION 1.1.1 (2024-09-29)");
             Console.WriteLine("# youtube.com/@JADERLINK");
 
             if (args.Length == 0)
@@ -23,55 +25,62 @@ namespace RE4_UHD_EFF_SPLIT
                 Console.WriteLine("Press any key to close the console.");
                 Console.ReadKey();
             }
-            else if (args.Length >= 1 && File.Exists(args[0]))
+            else
             {
-                FileInfo fileInfo = null;
-
-                try
+                for (int i = 0; i < args.Length; i++)
                 {
-                    fileInfo = new FileInfo(args[0]);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Error in the path: " + Environment.NewLine + ex);
-                }
-                if (fileInfo != null)
-                {
-                    Console.WriteLine("File: " + fileInfo.Name);
-
-                    if (fileInfo.Extension.ToUpperInvariant() == ".EFF")
+                    if (File.Exists(args[i]))
                     {
+                        FileInfo fileInfo = null;
+
                         try
                         {
-                            EFF_SPLIT.Extract.ExtractFileUHD(fileInfo.FullName);
+                            fileInfo = new FileInfo(args[i]);
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("Error: " + Environment.NewLine + ex);
+                            Console.WriteLine("Error in the path: " + Environment.NewLine + ex);
                         }
+                        if (fileInfo != null)
+                        {
+                            Console.WriteLine("File: " + fileInfo.Name);
 
-                    }
-                    else if (fileInfo.Extension.ToUpperInvariant() == ".IDX_UHD_EFF_SPLIT")
-                    {
-                        try
-                        {
-                            EFF_SPLIT.Repack.RepackFileUHD(fileInfo.FullName);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("Error: " + Environment.NewLine + ex);
+                            if (fileInfo.Extension.ToUpperInvariant() == ".EFF")
+                            {
+                                try
+                                {
+                                    EFF_SPLIT.Extract.ExtractFileUHD(fileInfo.FullName);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Error: " + Environment.NewLine + ex);
+                                }
+
+                            }
+                            else if (fileInfo.Extension.ToUpperInvariant() == ".IDX_UHD_EFF_SPLIT")
+                            {
+                                try
+                                {
+                                    EFF_SPLIT.Repack.RepackFileUHD(fileInfo.FullName);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Error: " + Environment.NewLine + ex);
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("The extension is not valid: " + fileInfo.Extension);
+                            }
+
                         }
                     }
                     else
                     {
-                        Console.WriteLine("The extension is not valid: " + fileInfo.Extension);
+                        Console.WriteLine("File specified does not exist: " + args[i]);
                     }
-                }
 
-            }
-            else
-            {
-                Console.WriteLine("File specified does not exist.");
+                }
             }
 
             Console.WriteLine("Finished!!!");

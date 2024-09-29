@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // As informações gerais sobre um assembly são controladas por
 // conjunto de atributos. Altere estes valores de atributo para modificar as informações
 // associadas a um assembly.
-[assembly: AssemblyTitle("RE4_UHD_EFF_SPLIT")]
-[assembly: AssemblyDescription("RE4_UHD_EFF_SPLIT by JADERLINK")]
+[assembly: AssemblyTitle("RE4_PS4NS_EFF_SPLIT")]
+[assembly: AssemblyDescription("RE4_PS4NS_EFF_SPLIT by JADERLINK")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("JADERLINK")]
-[assembly: AssemblyProduct("RE4_UHD_EFF_SPLIT")]
+[assembly: AssemblyProduct("RE4_PS4NS_EFF_SPLIT")]
 [assembly: AssemblyCopyright("Copyright ©JADERLINK 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // O GUID a seguir será destinado à ID de typelib se este projeto for exposto para COM
-[assembly: Guid("94e72f26-a767-4a27-b2d3-2b2b59de326b")]
+[assembly: Guid("a8223bb7-8234-4b98-9500-3aa267d421be")]
 
 // As informações da versão de um assembly consistem nos quatro valores a seguir:
 //

@@ -5,7 +5,7 @@ using System.IO;
 
 namespace EFF_SPLIT
 {
-    public static class PS2Extract
+    internal static class PS2Extract
     {
         public static FileContent[] ExtractTable05_TPL(BinaryReader br, long StartOffset, long EndOffset) 
         {

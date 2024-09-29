@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{94E72F26-A767-4A27-B2D3-2B2B59DE326B}</ProjectGuid>
+    <ProjectGuid>{A8223BB7-8234-4B98-9500-3AA267D421BE}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>RE4_UHD_EFF_SPLIT</RootNamespace>
-    <AssemblyName>RE4_UHD_EFF_SPLIT</AssemblyName>
+    <RootNamespace>RE4_PS4NS_EFF_SPLIT</RootNamespace>
+    <AssemblyName>RE4_PS4NS_EFF_SPLIT</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -38,7 +38,7 @@
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>RE4_UHD_EFF_SPLIT.Program</StartupObject>
+    <StartupObject>RE4_PS4NS_EFF_SPLIT.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

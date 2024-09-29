@@ -9,31 +9,36 @@ namespace EFF_SPLIT
     {
         public static void ExtractFilePS2(string fileFullName) 
         {
-            ExtractFile(fileFullName, false);
-            string baseDirectory = Path.GetDirectoryName(fileFullName);
-            string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
-            var IDX_EFF_SPLIT = new FileInfo(Path.Combine(baseDirectory, $"{baseFileName}.IDX_PS2_EFF_SPLIT")).CreateText();
-            IDX_EFF_SPLIT.WriteLine("# github.com/JADERLINK/RE4_EFF_SPLIT_TOOL");
-            IDX_EFF_SPLIT.WriteLine("# RE4 PS2 EFF SPLIT");
-            IDX_EFF_SPLIT.WriteLine("# By JADERLINK");
-            IDX_EFF_SPLIT.WriteLine("# youtube.com/@JADERLINK");
-            IDX_EFF_SPLIT.Close();
+            ExtractFile(fileFullName, false, false);
+            GenerateIdx(fileFullName, "IDX_PS2_EFF_SPLIT", "RE4 PS2 EFF SPLIT");
         }
 
         public static void ExtractFileUHD(string fileFullName)
         {
-            ExtractFile(fileFullName, true);
+            ExtractFile(fileFullName, true, false);
+            GenerateIdx(fileFullName, "IDX_UHD_EFF_SPLIT", "RE4 UHD EFF SPLIT");
+        }
+
+        public static void ExtractFilePS4NS(string fileFullName)
+        {
+            ExtractFile(fileFullName, true, true);
+            GenerateIdx(fileFullName, "IDX_PS4NS_EFF_SPLIT", "RE4 PS4NS EFF SPLIT");
+        }
+
+        private static void GenerateIdx(string fileFullName, string idxFormat, string toolName) 
+        {
             string baseDirectory = Path.GetDirectoryName(fileFullName);
             string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
-            var IDX_EFF_SPLIT = new FileInfo(Path.Combine(baseDirectory, $"{baseFileName}.IDX_UHD_EFF_SPLIT")).CreateText();
+            var IDX_EFF_SPLIT = new FileInfo(Path.Combine(baseDirectory, $"{baseFileName}.{idxFormat}")).CreateText();
             IDX_EFF_SPLIT.WriteLine("# github.com/JADERLINK/RE4_EFF_SPLIT_TOOL");
-            IDX_EFF_SPLIT.WriteLine("# RE4 UHD EFF SPLIT");
+            IDX_EFF_SPLIT.WriteLine($"# {toolName}");
             IDX_EFF_SPLIT.WriteLine("# By JADERLINK");
             IDX_EFF_SPLIT.WriteLine("# youtube.com/@JADERLINK");
             IDX_EFF_SPLIT.Close();
         }
 
-        private static void ExtractFile(string fileFullName, bool IsUHD) 
+
+        private static void ExtractFile(string fileFullName, bool IsUHD, bool IsPS4NS) 
         {
             string baseDirectory = Path.GetDirectoryName(fileFullName);
             string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
@@ -75,7 +80,7 @@ namespace EFF_SPLIT
             tables.Table02 = Separate.TableIndexEntry(br, offset_2_EAR_Link, out _);
             tables.Table03 = Separate.TableIndexEntry(br, offset_3_Unknown_Table, out _);
             tables.Table04 = Separate.TableIndexEntry(br, offset_4_Model_IDs, out _);
-            tables.Table06 = Separate.Table06(br, offset_6_Texture_Metadata, out _, IsUHD);
+            tables.Table06 = Separate.Table06(br, offset_6_Texture_Metadata, out _, IsUHD | IsPS4NS);
             tables.Table09 = Separate.Table09(br, offset_9_Paths, out _);
 
             tables.Table07_Effect_0_Type = Separate.Effect_Type(br, offset_7_Effect_0_Type, out _);
@@ -84,17 +89,17 @@ namespace EFF_SPLIT
             FileContent[] table05 = new FileContent[0];
             ModelFileContent[] table10 = new ModelFileContent[0];
 
-            if (IsUHD == false)
+            if (IsUHD | IsPS4NS)
+            {
+                //uhd or PS4NS
+                table05 = UhdExtract.ExtractTable05_TPL(br, offset_5_TPL_Offsets, IsPS4NS);
+                table10 = UhdExtract.ExtractTable10_MODEL(br, offset_10_Data_Offset, IsPS4NS);
+            }
+            else
             {
                 //ps2
                 table05 = PS2Extract.ExtractTable05_TPL(br, offset_5_TPL_Offsets, offset_6_Texture_Metadata);
                 table10 = PS2Extract.ExtractTable10_MODEL(br, offset_10_Data_Offset, br.BaseStream.Length);
-            }
-            else
-            {
-                //uhd
-                table05 = UhdExtract.ExtractTable05_TPL(br, offset_5_TPL_Offsets);
-                table10 = UhdExtract.ExtractTable10_MODEL(br, offset_10_Data_Offset);
             }
 
             br.Close();

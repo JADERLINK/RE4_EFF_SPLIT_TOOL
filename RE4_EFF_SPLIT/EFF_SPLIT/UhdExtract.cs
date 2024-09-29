@@ -5,9 +5,9 @@ using System.IO;
 
 namespace EFF_SPLIT
 {
-    public static class UhdExtract
+    internal static class UhdExtract
     {
-        public static FileContent[] ExtractTable05_TPL(BinaryReader br, long StartOffset)
+        public static FileContent[] ExtractTable05_TPL(BinaryReader br, long StartOffset, bool IsPS4NS)
         {
             if (StartOffset != 0)
             {
@@ -26,7 +26,7 @@ namespace EFF_SPLIT
                 {
                     long start = offsetArray[i] + StartOffset;
                     long end = start;
-                    UhdTPLDecoder(br.BaseStream, start, out end);
+                    UhdTPLDecoder(br.BaseStream, start, out end, IsPS4NS);
                     int length = (int)(end - start);
 
                     br.BaseStream.Position = start;
@@ -42,7 +42,7 @@ namespace EFF_SPLIT
             }
         }
 
-        public static ModelFileContent[] ExtractTable10_MODEL(BinaryReader br, long StartOffset)
+        public static ModelFileContent[] ExtractTable10_MODEL(BinaryReader br, long StartOffset, bool IsPS4NS)
         {
             if (StartOffset != 0)
             {
@@ -71,7 +71,7 @@ namespace EFF_SPLIT
                     //bin
                     long binStart = BIN_OFFSET + start;
                     long binEnd = binStart;
-                    UhdBINDecoder(br.BaseStream, binStart, out binEnd);
+                    UhdBINDecoder(br.BaseStream, binStart, out binEnd, IsPS4NS);
                     int binLen = (int)(binEnd - binStart);
 
                     br.BaseStream.Position = binStart;
@@ -83,7 +83,7 @@ namespace EFF_SPLIT
                     long tplStart = TPL_OFFSET + start;
                     long tplEnd = tplStart;
 
-                    UhdTPLDecoder(br.BaseStream, tplStart, out tplEnd);
+                    UhdTPLDecoder(br.BaseStream, tplStart, out tplEnd, IsPS4NS);
 
                     int tplLen = (int)(tplEnd - tplStart);
 
@@ -100,7 +100,7 @@ namespace EFF_SPLIT
             }
         }
 
-        private static void UhdTPLDecoder(Stream stream, long startOffset, out long endOffset)
+        private static void UhdTPLDecoder(Stream stream, long startOffset, out long endOffset, bool IsPs4NS)
         {
             BinaryReader br = new BinaryReader(stream);
             br.BaseStream.Position = startOffset;
@@ -120,7 +120,17 @@ namespace EFF_SPLIT
             for (int i = 0; i < TplAmount; i++)
             {
                 uint image_data_offset = br.ReadUInt32();
+                if (IsPs4NS)
+                {
+                    _ = br.ReadUInt32(); // image_data_offset part2
+                }
+
                 uint palette_offset = br.ReadUInt32(); // não usado
+                if (IsPs4NS)
+                {
+                    _ = br.ReadUInt32(); // palette_offset part2
+                }
+
                 offsets[i] = image_data_offset;
             }
 
@@ -132,15 +142,7 @@ namespace EFF_SPLIT
                 ushort height = br.ReadUInt16();
                 uint PixelFormatType = br.ReadUInt32();
                 uint secundOffset = br.ReadUInt32();
-                uint wrap_s = br.ReadUInt32();
-                uint wrap_t = br.ReadUInt32();
-                uint min_filter = br.ReadUInt32();
-                uint mag_filter = br.ReadUInt32();
-                float lod_bias = br.ReadSingle();
-                byte enable_lod = br.ReadByte();
-                byte min_lod = br.ReadByte();
-                byte max_lod = br.ReadByte();
-                byte is_compressed = br.ReadByte();
+                // proximos campos omitidos
 
                 br.BaseStream.Position = secundOffset + startOffset;
                 uint PackID = br.ReadUInt32();
@@ -150,13 +152,21 @@ namespace EFF_SPLIT
             endOffset = br.BaseStream.Position;
         }
 
-        public static void UhdBINDecoder(Stream stream, long startOffset, out long endOffset)
+        private static void UhdBINDecoder(Stream stream, long startOffset, out long endOffset, bool IsPs4NS)
         {
             BinaryReader br = new BinaryReader(stream);
             br.BaseStream.Position = startOffset;
 
+            var (material_count, material_offset) = IsPs4NS ? GetHeaderPS4NS(br) : GetHeaderUHD(br);
+
+            Materials(br, material_offset + startOffset, material_count);
+            endOffset = br.BaseStream.Position;
+        }
+
+        private static (ushort material_count, uint material_offset) GetHeaderUHD(BinaryReader br) 
+        {
             uint bone_offset = br.ReadUInt32(); //--headersize // 60 00 00 00
-            if ( !(bone_offset == 0x00000060 || bone_offset == 0x00000040 || bone_offset == 0x00000050))
+            if (!(bone_offset == 0x00000060 || bone_offset == 0x00000040 || bone_offset == 0x00000050))
             {
                 throw new ArgumentException("Invalid BIN file!");
             }
@@ -165,9 +175,25 @@ namespace EFF_SPLIT
             ushort material_count = br.ReadUInt16();
             uint material_offset = br.ReadUInt32();
 
-            Materials(br, material_offset + startOffset, material_count);
-            endOffset = br.BaseStream.Position;
+            return (material_count, material_offset);
         }
+
+        private static (ushort material_count, uint material_offset) GetHeaderPS4NS(BinaryReader br)
+        {
+            uint bone_offset = br.ReadUInt32(); //--headersize // 98 00 00 00
+            if (! (bone_offset == 0x00000098))
+            {
+                throw new ArgumentException("Invalid BIN file!");
+            }
+            br.ReadBytes(38); // pula campos
+
+            ushort material_count = br.ReadUInt16();
+            _ = br.ReadUInt32(); // nada padding
+            uint material_offset = br.ReadUInt32();
+
+            return (material_count, material_offset);
+        }
+
         private static void Materials(BinaryReader br, long offset, ushort MatCount)
         {
             br.BaseStream.Position = offset;

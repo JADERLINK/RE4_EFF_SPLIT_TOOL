@@ -6,7 +6,7 @@ using System.IO;
 
 namespace EFF_SPLIT
 {
-    public class Join
+    internal class Join
     {
         public delegate void CustomTable(BinaryWriter bw, bool IsUHD);
 
