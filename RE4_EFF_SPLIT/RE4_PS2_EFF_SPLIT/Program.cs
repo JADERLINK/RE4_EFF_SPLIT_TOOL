@@ -15,7 +15,7 @@ namespace RE4_PS2_EFF_SPLIT
 
             Console.WriteLine("# RE4 PS2 EFF SPLIT");
             Console.WriteLine("# By JADERLINK");
-            Console.WriteLine("# VERSION 1.1.1 (2024-09-29)");
+            Console.WriteLine("# VERSION 1.2.0 (2024-11-23)");
             Console.WriteLine("# youtube.com/@JADERLINK");
 
             if (args.Length == 0)

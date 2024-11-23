@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using SimpleEndianBinaryIO;
 
 namespace EFF_SPLIT
 {
     internal class Separate
     {
-        public static TableIndex TableIndexEntry(BinaryReader br, long StartOffset, out long EndOfffset) 
+        public static TableIndex TableIndexEntry(EndianBinaryReader br, long StartOffset, out long EndOfffset) 
         {
             if (StartOffset != 0)
             {
@@ -31,7 +32,7 @@ namespace EFF_SPLIT
             }
         }
 
-        public static TableIndex Table06(BinaryReader br, long StartOffset, out long EndOffset, bool IsUHD)
+        public static TableIndex Table06(EndianBinaryReader br, long StartOffset, out long EndOffset, bool IsExtendedEntry)
         {
             if (StartOffset != 0)
             {
@@ -51,7 +52,7 @@ namespace EFF_SPLIT
                     br.BaseStream.Position = StartOffset + offsetArray[i];
                     TableEntry entry = new TableEntry();
                     byte[] Arr = new byte[32];
-                    if (IsUHD)
+                    if (IsExtendedEntry)
                     {
                         var temp = br.ReadBytes(32);
                         temp.CopyTo(Arr, 0);
@@ -74,7 +75,7 @@ namespace EFF_SPLIT
             }
         }
 
-        public static Table09 Table09(BinaryReader br, long StartOffset, out long EndOffset)
+        public static Table09 Table09(EndianBinaryReader br, long StartOffset, out long EndOffset)
         {
             if (StartOffset != 0)
             {
@@ -115,7 +116,7 @@ namespace EFF_SPLIT
             }
         }
 
-        public static TableEffectType Effect_Type(BinaryReader br, long StartOffset, out long EndOffset) 
+        public static TableEffectType Effect_Type(EndianBinaryReader br, long StartOffset, out long EndOffset, Endianness endianness) 
         {
             if (StartOffset != 0)
             {
@@ -134,7 +135,7 @@ namespace EFF_SPLIT
                 {
                     br.BaseStream.Position = offsetArray[i] + StartOffset;
                     byte[] header = br.ReadBytes(48);
-                    ushort amount2 = BitConverter.ToUInt16(header, 0);
+                    ushort amount2 = EndianBitConverter.ToUInt16(header, 0, endianness);
                     EffectGroup group = new EffectGroup(amount2);
                     group.Header = header;
 

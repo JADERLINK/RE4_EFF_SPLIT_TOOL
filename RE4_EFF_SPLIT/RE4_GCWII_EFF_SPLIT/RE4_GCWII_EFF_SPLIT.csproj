@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A8223BB7-8234-4B98-9500-3AA267D421BE}</ProjectGuid>
+    <ProjectGuid>{F99CD16C-F7BE-45C6-B794-285B6368C144}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>RE4_PS4NS_EFF_SPLIT</RootNamespace>
-    <AssemblyName>RE4_PS4NS_EFF_SPLIT</AssemblyName>
+    <RootNamespace>RE4_GCWII_EFF_SPLIT</RootNamespace>
+    <AssemblyName>RE4_GCWII_EFF_SPLIT</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -35,10 +35,10 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup>
-    <NoWin32Manifest>true</NoWin32Manifest>
+    <StartupObject>RE4_GCWII_EFF_SPLIT.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>RE4_PS4NS_EFF_SPLIT.Program</StartupObject>
+    <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

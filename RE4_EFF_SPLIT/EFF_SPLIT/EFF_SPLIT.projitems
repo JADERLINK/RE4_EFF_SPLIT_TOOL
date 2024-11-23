@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Extract.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IsVersion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Join.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PS2Extract.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Repack.cs" />

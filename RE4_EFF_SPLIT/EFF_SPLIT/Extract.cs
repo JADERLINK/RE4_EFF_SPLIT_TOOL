@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using SimpleEndianBinaryIO;
 
 namespace EFF_SPLIT
 {
@@ -9,20 +10,32 @@ namespace EFF_SPLIT
     {
         public static void ExtractFilePS2(string fileFullName) 
         {
-            ExtractFile(fileFullName, false, false);
+            ExtractFile(fileFullName, IsVersion.IsPS2);
             GenerateIdx(fileFullName, "IDX_PS2_EFF_SPLIT", "RE4 PS2 EFF SPLIT");
         }
 
         public static void ExtractFileUHD(string fileFullName)
         {
-            ExtractFile(fileFullName, true, false);
+            ExtractFile(fileFullName, IsVersion.IsUHD);
             GenerateIdx(fileFullName, "IDX_UHD_EFF_SPLIT", "RE4 UHD EFF SPLIT");
         }
 
         public static void ExtractFilePS4NS(string fileFullName)
         {
-            ExtractFile(fileFullName, true, true);
+            ExtractFile(fileFullName, IsVersion.IsPS4NS);
             GenerateIdx(fileFullName, "IDX_PS4NS_EFF_SPLIT", "RE4 PS4NS EFF SPLIT");
+        }
+
+        public static void ExtractFileGCWII(string fileFullName) 
+        {
+            ExtractFile(fileFullName, IsVersion.IsGCWII);
+            GenerateIdx(fileFullName, "IDX_GCWII_EFF_SPLIT", "RE4 GCWII EFF SPLIT");
+        }
+
+        public static void ExtractFileX360(string fileFullName)
+        {
+            ExtractFile(fileFullName, IsVersion.IsX360);
+            GenerateIdx(fileFullName, "IDX_X360_EFF_SPLIT", "RE4 X360 EFF SPLIT");
         }
 
         private static void GenerateIdx(string fileFullName, string idxFormat, string toolName) 
@@ -38,8 +51,16 @@ namespace EFF_SPLIT
         }
 
 
-        private static void ExtractFile(string fileFullName, bool IsUHD, bool IsPS4NS) 
+        private static void ExtractFile(string fileFullName, IsVersion version) 
         {
+            Endianness endianness = Endianness.LittleEndian;
+            string effBlobFormat = "EFFBLOB";
+            if (version == IsVersion.IsGCWII || version == IsVersion.IsX360)
+            {
+                endianness = Endianness.BigEndian;
+                effBlobFormat = "EFFBLOBBIG";
+            }
+
             string baseDirectory = Path.GetDirectoryName(fileFullName);
             string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
 
@@ -53,7 +74,7 @@ namespace EFF_SPLIT
                 baseDirectoryPath = Path.Combine(baseDirectory, baseFileName + "_EFF");
             }
 
-            BinaryReader br = new BinaryReader(File.OpenRead(fileFullName));
+            EndianBinaryReader br = new EndianBinaryReader(File.OpenRead(fileFullName), endianness);
             uint Magic = br.ReadUInt32(); //sempre 0x0B
             if (Magic != 0x0B)
             {
@@ -80,31 +101,31 @@ namespace EFF_SPLIT
             tables.Table02 = Separate.TableIndexEntry(br, offset_2_EAR_Link, out _);
             tables.Table03 = Separate.TableIndexEntry(br, offset_3_Unknown_Table, out _);
             tables.Table04 = Separate.TableIndexEntry(br, offset_4_Model_IDs, out _);
-            tables.Table06 = Separate.Table06(br, offset_6_Texture_Metadata, out _, IsUHD | IsPS4NS);
+            tables.Table06 = Separate.Table06(br, offset_6_Texture_Metadata, out _, version != IsVersion.IsPS2);
             tables.Table09 = Separate.Table09(br, offset_9_Paths, out _);
 
-            tables.Table07_Effect_0_Type = Separate.Effect_Type(br, offset_7_Effect_0_Type, out _);
-            tables.Table08_Effect_1_Type = Separate.Effect_Type(br, offset_8_Effect_1_Type, out _);
+            tables.Table07_Effect_0_Type = Separate.Effect_Type(br, offset_7_Effect_0_Type, out _, endianness);
+            tables.Table08_Effect_1_Type = Separate.Effect_Type(br, offset_8_Effect_1_Type, out _, endianness);
 
-            FileContent[] table05 = new FileContent[0];
-            ModelFileContent[] table10 = new ModelFileContent[0];
+            FileContent[] table05;
+            ModelFileContent[] table10;
 
-            if (IsUHD | IsPS4NS)
+            if (version == IsVersion.IsUHD || version == IsVersion.IsPS4NS || version == IsVersion.IsX360)
             {
-                //uhd or PS4NS
-                table05 = UhdExtract.ExtractTable05_TPL(br, offset_5_TPL_Offsets, IsPS4NS);
-                table10 = UhdExtract.ExtractTable10_MODEL(br, offset_10_Data_Offset, IsPS4NS);
+                //uhd or PS4NS or x360
+                table05 = UhdExtract.ExtractTable05_TPL(br, offset_5_TPL_Offsets, version == IsVersion.IsPS4NS, endianness);
+                table10 = UhdExtract.ExtractTable10_MODEL(br, offset_10_Data_Offset, version == IsVersion.IsPS4NS, endianness);
             }
             else
             {
-                //ps2
+                //ps2 or GCWII
                 table05 = PS2Extract.ExtractTable05_TPL(br, offset_5_TPL_Offsets, offset_6_Texture_Metadata);
                 table10 = PS2Extract.ExtractTable10_MODEL(br, offset_10_Data_Offset, br.BaseStream.Length);
             }
 
             br.Close();
 
-            //grava os arquivos
+            //parte que grava os arquivos
 
             string Effect_TPL_Path = Path.Combine(baseDirectoryPath, "Effect TPL");
             string Effect_Models_Path = Path.Combine(baseDirectoryPath, "Effect Models");
@@ -141,9 +162,10 @@ namespace EFF_SPLIT
             }
 
             //EFFBLOB
-            var effBlob = new FileInfo(Path.Combine(baseDirectoryPath, $"{baseFileName}.EFFBLOB")).Create();
+            IsVersion effBlobVersion = version == IsVersion.IsPS2 ? IsVersion.IsUHD : version;
+            var effBlob = new FileInfo(Path.Combine(baseDirectoryPath, $"{baseFileName}.{effBlobFormat}")).Create();
             Join join = new Join(tables);
-            join.Create_EFF_File(effBlob, true);
+            join.Create_EFF_File(effBlob, effBlobVersion);
             effBlob.Close();
         }
 

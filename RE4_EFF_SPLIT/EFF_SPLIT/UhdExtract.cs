@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using SimpleEndianBinaryIO;
 
 namespace EFF_SPLIT
 {
     internal static class UhdExtract
     {
-        public static FileContent[] ExtractTable05_TPL(BinaryReader br, long StartOffset, bool IsPS4NS)
+        public static FileContent[] ExtractTable05_TPL(EndianBinaryReader br, long StartOffset, bool IsPS4NS, Endianness endianness)
         {
             if (StartOffset != 0)
             {
@@ -25,8 +26,7 @@ namespace EFF_SPLIT
                 for (int i = 0; i < Amount1; i++)
                 {
                     long start = offsetArray[i] + StartOffset;
-                    long end = start;
-                    UhdTPLDecoder(br.BaseStream, start, out end, IsPS4NS);
+                    UhdTPLDecoder(br.BaseStream, start, out long end, IsPS4NS, endianness);
                     int length = (int)(end - start);
 
                     br.BaseStream.Position = start;
@@ -42,7 +42,7 @@ namespace EFF_SPLIT
             }
         }
 
-        public static ModelFileContent[] ExtractTable10_MODEL(BinaryReader br, long StartOffset, bool IsPS4NS)
+        public static ModelFileContent[] ExtractTable10_MODEL(EndianBinaryReader br, long StartOffset, bool IsPS4NS, Endianness endianness)
         {
             if (StartOffset != 0)
             {
@@ -70,8 +70,7 @@ namespace EFF_SPLIT
 
                     //bin
                     long binStart = BIN_OFFSET + start;
-                    long binEnd = binStart;
-                    UhdBINDecoder(br.BaseStream, binStart, out binEnd, IsPS4NS);
+                    UhdBINDecoder(br.BaseStream, binStart, out long binEnd, IsPS4NS, endianness);
                     int binLen = (int)(binEnd - binStart);
 
                     br.BaseStream.Position = binStart;
@@ -81,10 +80,7 @@ namespace EFF_SPLIT
 
                     //tpl
                     long tplStart = TPL_OFFSET + start;
-                    long tplEnd = tplStart;
-
-                    UhdTPLDecoder(br.BaseStream, tplStart, out tplEnd, IsPS4NS);
-
+                    UhdTPLDecoder(br.BaseStream, tplStart, out long tplEnd, IsPS4NS, endianness);
                     int tplLen = (int)(tplEnd - tplStart);
 
                     br.BaseStream.Position = tplStart;
@@ -100,9 +96,9 @@ namespace EFF_SPLIT
             }
         }
 
-        private static void UhdTPLDecoder(Stream stream, long startOffset, out long endOffset, bool IsPs4NS)
+        private static void UhdTPLDecoder(Stream stream, long startOffset, out long endOffset, bool IsPs4NS, Endianness endianness)
         {
-            BinaryReader br = new BinaryReader(stream);
+            EndianBinaryReader br = new EndianBinaryReader(stream, endianness);
             br.BaseStream.Position = startOffset;
 
             uint magic = br.ReadUInt32();
@@ -152,9 +148,9 @@ namespace EFF_SPLIT
             endOffset = br.BaseStream.Position;
         }
 
-        private static void UhdBINDecoder(Stream stream, long startOffset, out long endOffset, bool IsPs4NS)
+        private static void UhdBINDecoder(Stream stream, long startOffset, out long endOffset, bool IsPs4NS, Endianness endianness)
         {
-            BinaryReader br = new BinaryReader(stream);
+            EndianBinaryReader br = new EndianBinaryReader(stream, endianness);
             br.BaseStream.Position = startOffset;
 
             var (material_count, material_offset) = IsPs4NS ? GetHeaderPS4NS(br) : GetHeaderUHD(br);
@@ -163,7 +159,7 @@ namespace EFF_SPLIT
             endOffset = br.BaseStream.Position;
         }
 
-        private static (ushort material_count, uint material_offset) GetHeaderUHD(BinaryReader br) 
+        private static (ushort material_count, uint material_offset) GetHeaderUHD(EndianBinaryReader br) 
         {
             uint bone_offset = br.ReadUInt32(); //--headersize // 60 00 00 00
             if (!(bone_offset == 0x00000060 || bone_offset == 0x00000040 || bone_offset == 0x00000050))
@@ -178,7 +174,7 @@ namespace EFF_SPLIT
             return (material_count, material_offset);
         }
 
-        private static (ushort material_count, uint material_offset) GetHeaderPS4NS(BinaryReader br)
+        private static (ushort material_count, uint material_offset) GetHeaderPS4NS(EndianBinaryReader br)
         {
             uint bone_offset = br.ReadUInt32(); //--headersize // 98 00 00 00
             if (! (bone_offset == 0x00000098))
@@ -194,7 +190,7 @@ namespace EFF_SPLIT
             return (material_count, material_offset);
         }
 
-        private static void Materials(BinaryReader br, long offset, ushort MatCount)
+        private static void Materials(EndianBinaryReader br, long offset, ushort MatCount)
         {
             br.BaseStream.Position = offset;
 
@@ -204,13 +200,13 @@ namespace EFF_SPLIT
             }
         }
 
-        private static void Get_Material(BinaryReader br)
+        private static void Get_Material(EndianBinaryReader br)
         {
             br.ReadBytes(24); // material
             Get_face_index(br);
         }
 
-        private static void Get_face_index(BinaryReader br)
+        private static void Get_face_index(EndianBinaryReader br)
         {
             uint buffer_size = br.ReadUInt32();
             uint count = br.ReadUInt32(); //unused

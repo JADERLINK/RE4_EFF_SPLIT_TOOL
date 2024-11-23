@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace RE4_PS4NS_EFF_SPLIT
+namespace RE4_GCWII_EFF_SPLIT
 {
     class Program
     {
@@ -13,7 +13,7 @@ namespace RE4_PS4NS_EFF_SPLIT
         {
             System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
-            Console.WriteLine("# RE4 PS4NS EFF SPLIT");
+            Console.WriteLine("# RE4 GCWII EFF SPLIT");
             Console.WriteLine("# By JADERLINK");
             Console.WriteLine("# VERSION 1.2.0 (2024-11-23)");
             Console.WriteLine("# youtube.com/@JADERLINK");
@@ -49,7 +49,7 @@ namespace RE4_PS4NS_EFF_SPLIT
                             {
                                 try
                                 {
-                                    EFF_SPLIT.Extract.ExtractFilePS4NS(fileInfo.FullName);
+                                    EFF_SPLIT.Extract.ExtractFileGCWII(fileInfo.FullName);
                                 }
                                 catch (Exception ex)
                                 {
@@ -57,11 +57,11 @@ namespace RE4_PS4NS_EFF_SPLIT
                                 }
 
                             }
-                            else if (fileInfo.Extension.ToUpperInvariant() == ".IDX_PS4NS_EFF_SPLIT")
+                            else if (fileInfo.Extension.ToUpperInvariant() == ".IDX_GCWII_EFF_SPLIT")
                             {
                                 try
                                 {
-                                    EFF_SPLIT.Repack.RepackFilePS4NS(fileInfo.FullName);
+                                    EFF_SPLIT.Repack.RepackFileGCWII(fileInfo.FullName);
                                 }
                                 catch (Exception ex)
                                 {
@@ -72,8 +72,8 @@ namespace RE4_PS4NS_EFF_SPLIT
                             {
                                 Console.WriteLine("The extension is not valid: " + fileInfo.Extension);
                             }
-                        }
 
+                        }
                     }
                     else
                     {

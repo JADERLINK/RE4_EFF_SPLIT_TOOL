@@ -58,5 +58,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="..\EFF_SPLIT\EFF_SPLIT.projitems" Label="Shared" />
+  <Import Project="..\SimpleEndianBinaryIO\SimpleEndianBinaryIO.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

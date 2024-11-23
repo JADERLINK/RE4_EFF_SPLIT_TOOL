@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using SimpleEndianBinaryIO;
 
 namespace EFF_SPLIT
 {
     internal static class PS2Extract
     {
-        public static FileContent[] ExtractTable05_TPL(BinaryReader br, long StartOffset, long EndOffset) 
+        public static FileContent[] ExtractTable05_TPL(EndianBinaryReader br, long StartOffset, long EndOffset) 
         {
             if (StartOffset != 0)
             {
@@ -26,7 +27,7 @@ namespace EFF_SPLIT
                 {
                     long start = offsetArray[i] + StartOffset;
                     br.BaseStream.Position = start;
-                    long end = start;
+                    long end;
                     if (i + 1 < Amount1)
                     {
                         end = offsetArray[i + 1] + StartOffset;
@@ -49,7 +50,7 @@ namespace EFF_SPLIT
             }
         }
 
-        public static ModelFileContent[] ExtractTable10_MODEL(BinaryReader br, long StartOffset, long EndOffset) 
+        public static ModelFileContent[] ExtractTable10_MODEL(EndianBinaryReader br, long StartOffset, long EndOffset) 
         {
             if (StartOffset != 0)
             {
@@ -71,7 +72,7 @@ namespace EFF_SPLIT
                     long start = offsetArray[i] + StartOffset;
                     br.BaseStream.Position = start;
 
-                    uint Fixed2 = br.ReadUInt32(); // sempre 0x02
+                    uint Fixed2 = br.ReadUInt32(); // sempre 0x02 no ps2 // em GCWII é 0x04 
                     uint BIN_OFFSET = br.ReadUInt32();
                     uint TPL_OFFSET = br.ReadUInt32();
 
@@ -87,7 +88,7 @@ namespace EFF_SPLIT
 
                     //tpl
                     long tplStart = TPL_OFFSET + start;
-                    long tplEnd = tplStart;
+                    long tplEnd;
                     if (i + 1 < Amount1)
                     {
                         tplEnd = offsetArray[i + 1] + StartOffset;

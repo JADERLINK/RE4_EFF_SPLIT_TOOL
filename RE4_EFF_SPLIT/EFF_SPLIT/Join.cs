@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.IO;
+using SimpleEndianBinaryIO;
 
 namespace EFF_SPLIT
 {
     internal class Join
     {
-        public delegate void CustomTable(BinaryWriter bw, bool IsUHD);
+        public delegate void CustomTable(EndianBinaryWriter bw, bool IsPS2);
 
         public CustomTable WriteTable05;
         public CustomTable WriteTable10;
@@ -22,47 +23,53 @@ namespace EFF_SPLIT
             WriteTable10 = CustomTableEmpty;
         }
 
-        public void Create_EFF_File(Stream stream, bool IsUHD) 
+        public void Create_EFF_File(Stream stream, IsVersion version) 
         {
-            var bw = new BinaryWriter(stream);
+            Endianness endianness = Endianness.LittleEndian;
+            if (version == IsVersion.IsGCWII || version == IsVersion.IsX360)
+            {
+                endianness = Endianness.BigEndian;
+            }
+
+            var bw = new EndianBinaryWriter(stream, endianness);
             bw.Write((uint)0x0B);
             bw.Write(new byte[0x2C]);
-            if (IsUHD)
+            if (version != IsVersion.IsPS2)
             {
-                bw.Write(new byte[0x10]);
+                bw.Write(new byte[0x10]); //Não pode ser PS2
             }
             uint offsetTable00 = (uint)bw.BaseStream.Position;
-            WriteTableIndex(bw, tables.Table00, IsUHD);
+            WriteTableIndex(bw, tables.Table00, version == IsVersion.IsPS2);
 
             uint offsetTable01 = (uint)bw.BaseStream.Position;
-            WriteTableIndex(bw, tables.Table01, IsUHD);
+            WriteTableIndex(bw, tables.Table01, version == IsVersion.IsPS2);
 
             uint offsetTable02 = (uint)bw.BaseStream.Position;
-            WriteTableIndex(bw, tables.Table02, IsUHD);
+            WriteTableIndex(bw, tables.Table02, version == IsVersion.IsPS2);
 
             uint offsetTable03 = (uint)bw.BaseStream.Position;
-            WriteTableIndex(bw, tables.Table03, IsUHD);
+            WriteTableIndex(bw, tables.Table03, version == IsVersion.IsPS2);
 
             uint offsetTable04 = (uint)bw.BaseStream.Position;
-            WriteTableIndex(bw, tables.Table04, IsUHD);
+            WriteTableIndex(bw, tables.Table04, version == IsVersion.IsPS2);
 
             uint offsetTable05 = (uint)bw.BaseStream.Position;
-            WriteTable05(bw, IsUHD);
+            WriteTable05(bw, version == IsVersion.IsPS2);
 
             uint offsetTable06 = (uint)bw.BaseStream.Position;
-            WriteTable06(bw, tables.Table06, IsUHD);
+            WriteTable06(bw, tables.Table06, endianness, version == IsVersion.IsPS2);
 
             uint offsetTable07 = (uint)bw.BaseStream.Position;
-            Write_Effect_Type(bw, tables.Table07_Effect_0_Type, IsUHD);
+            Write_Effect_Type(bw, tables.Table07_Effect_0_Type, endianness, version == IsVersion.IsPS2);
 
             uint offsetTable08 = (uint)bw.BaseStream.Position;
-            Write_Effect_Type(bw, tables.Table08_Effect_1_Type, IsUHD);
+            Write_Effect_Type(bw, tables.Table08_Effect_1_Type, endianness, version == IsVersion.IsPS2);
 
             uint offsetTable09 = (uint)bw.BaseStream.Position;
-            WriteTable09(bw, tables.Table09, IsUHD);
+            WriteTable09(bw, tables.Table09, endianness, version == IsVersion.IsPS2);
 
             uint offsetTable10 = (uint)bw.BaseStream.Position;
-            WriteTable10(bw, IsUHD);
+            WriteTable10(bw, version == IsVersion.IsPS2);
 
             bw.BaseStream.Position = 4;
             bw.Write(offsetTable00);
@@ -78,7 +85,7 @@ namespace EFF_SPLIT
             bw.Write(offsetTable10);
         }
 
-        private void WriteTableIndex(BinaryWriter bw, TableIndex Table, bool IsUHD) 
+        private void WriteTableIndex(EndianBinaryWriter bw, TableIndex Table, bool IsPS2) 
         {
             if (Table != null && Table.Entries.Length != 0)
             {
@@ -87,23 +94,23 @@ namespace EFF_SPLIT
                 {
                     bw.Write(Table.Entries[i].Value);
                 }
-                AddPadding(bw, IsUHD);
+                AddPadding(bw, IsPS2 == false);
             }
-            else if (IsUHD)
-            {
-                bw.Write(new byte[0x20]);
-            }
-            else 
+            else if (IsPS2)
             {
                 bw.Write(new byte[0x10]);
             }
+            else 
+            {
+                bw.Write(new byte[0x20]);
+            }
         }
 
-        private void WriteTable06(BinaryWriter bw, TableIndex Table06, bool IsUHD) 
+        private void WriteTable06(EndianBinaryWriter bw, TableIndex Table06, Endianness endianness, bool IsPS2) 
         {
             if (Table06 != null && Table06.Entries.Length != 0)
             {
-                uint entryByteLength = IsUHD ? 32u : 16u;
+                uint entryByteLength = IsPS2 ? 16u : 32u;
 
                 uint Length = (uint)Table06.Entries.Length;
                 uint calc = 4 + (Length * 4);
@@ -113,7 +120,7 @@ namespace EFF_SPLIT
                 calc = _line * 16;
                 calc += Length * entryByteLength;
                 byte[] res = new byte[calc];
-                BinaryWriter ms = new BinaryWriter(new MemoryStream(res));
+                EndianBinaryWriter ms = new EndianBinaryWriter(new MemoryStream(res), endianness);
 
                 ms.Write(Length);
                 uint offsetToOffset = 4;
@@ -124,13 +131,13 @@ namespace EFF_SPLIT
                     ms.BaseStream.Position = offsetToOffset;
                     ms.Write(offset);
                     ms.BaseStream.Position = offset;
-                    if (IsUHD)
+                    if (IsPS2)
                     {
-                        ms.Write(Table06.Entries[i].Value);
+                        ms.Write(Table06.Entries[i].Value.Take(16).ToArray());
                     }
                     else
                     {
-                        ms.Write(Table06.Entries[i].Value.Take(16).ToArray());
+                        ms.Write(Table06.Entries[i].Value);
                     }
                     offsetToOffset += 4;
                     offset = (uint)ms.BaseStream.Position;
@@ -139,18 +146,18 @@ namespace EFF_SPLIT
                 ms.Close();
                 bw.Write(res);
             }
-            else if (IsUHD)
-            {
-                bw.Write(new byte[0x20]);
-            }
-            else
+            else if (IsPS2)
             {
                 bw.Write(new byte[0x10]);
             }
+            else
+            {
+                bw.Write(new byte[0x20]);
+            }
         }
 
-        private void WriteTable09(BinaryWriter bw, Table09 table09, bool IsUHD) 
-        {
+        private void WriteTable09(EndianBinaryWriter bw, Table09 table09, Endianness endianness, bool IsPS2) 
+        { 
             if (table09 != null && table09.Entries.Length != 0)
             {
                 uint Length = (uint)table09.Entries.Length;
@@ -171,7 +178,7 @@ namespace EFF_SPLIT
                 }
                
                 byte[] res = new byte[calc];
-                BinaryWriter ms = new BinaryWriter(new MemoryStream(res));
+                EndianBinaryWriter ms = new EndianBinaryWriter(new MemoryStream(res), endianness);
 
                 ms.Write(Length);
                 uint offsetToOffset = 4;
@@ -193,13 +200,7 @@ namespace EFF_SPLIT
                         ms.Write(table09.Entries[i].Entries[j].Value);
                     }
 
-                    long current = ms.BaseStream.Position;
-                    long line2 = current / 16;
-                    long rest2 = current % 16;
-                    line2 += rest2 != 0 ? 1 : 0;
-                    long total = line2 * 16;
-                    long dif = total - current;
-                    ms.Write(new byte[dif]);
+                    AddPadding(ms, false);
 
                     offsetToOffset += 4;
                     offset = (uint)ms.BaseStream.Position;
@@ -209,17 +210,17 @@ namespace EFF_SPLIT
                 bw.Write(res);
 
             }
-            else if (IsUHD)
-            {
-                bw.Write(new byte[0x20]);
-            }
-            else
+            else if (IsPS2)
             {
                 bw.Write(new byte[0x10]);
             }
+            else
+            {
+                bw.Write(new byte[0x20]);
+            }
         }
 
-        private void Write_Effect_Type(BinaryWriter bw, TableEffectType table, bool IsUHD) 
+        private void Write_Effect_Type(EndianBinaryWriter bw, TableEffectType table, Endianness endianness, bool IsPS2) 
         {
             if (table != null && table.Groups.Length != 0) 
             {
@@ -241,7 +242,7 @@ namespace EFF_SPLIT
                 }
 
                 byte[] res = new byte[calc];
-                BinaryWriter ms = new BinaryWriter(new MemoryStream(res));
+                EndianBinaryWriter ms = new EndianBinaryWriter(new MemoryStream(res), endianness);
 
                 ms.Write(Length);
                 uint offsetToOffset = 4;
@@ -260,13 +261,7 @@ namespace EFF_SPLIT
                         ms.Write(table.Groups[i].Entries[j].Value);
                     }
 
-                    long current = ms.BaseStream.Position;
-                    long line2 = current / 16;
-                    long rest2 = current % 16;
-                    line2 += rest2 != 0 ? 1 : 0;
-                    long total = line2 * 16;
-                    long dif = total - current;
-                    ms.Write(new byte[dif]);
+                    AddPadding(ms, false);
 
                     offsetToOffset += 4;
                     offset = (uint)ms.BaseStream.Position;
@@ -276,20 +271,20 @@ namespace EFF_SPLIT
                 bw.Write(res);
 
             }
-            else if (IsUHD)
+            else if (IsPS2)
             {
-                bw.Write(new byte[0x20]);
+                bw.Write(new byte[0x10]);
             }
             else
             {
-                bw.Write(new byte[0x10]);
+                bw.Write(new byte[0x20]);
             }
         }
 
 
-        private void AddPadding(BinaryWriter bw, bool IsUHD) 
+        private void AddPadding(EndianBinaryWriter bw, bool IsExtendedPadding) 
         {
-            long _base = IsUHD == true ? 32 : 16;
+            long _base = IsExtendedPadding ? 32 : 16;
 
             long current = bw.BaseStream.Position;
             long lines = current / _base;
@@ -300,15 +295,15 @@ namespace EFF_SPLIT
             bw.Write(new byte[dif]);
         }
 
-        private void CustomTableEmpty(BinaryWriter bw, bool IsUHD) 
+        private void CustomTableEmpty(EndianBinaryWriter bw, bool IsPS2) 
         {
-            if (IsUHD)
+            if (IsPS2)
             {
-                bw.Write(new byte[0x20]);
+                bw.Write(new byte[0x10]);
             }
             else
             {
-                bw.Write(new byte[0x10]);
+                bw.Write(new byte[0x20]);
             }
         }
     }

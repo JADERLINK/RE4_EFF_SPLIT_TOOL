@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.IO;
+using SimpleEndianBinaryIO;
 
 namespace EFF_SPLIT
 {
@@ -10,16 +11,39 @@ namespace EFF_SPLIT
     {
         public static void RepackFilePS2(string fileFullName) 
         {
-            RepackFile(fileFullName, false);
+            RepackFile(fileFullName, IsVersion.IsPS2);
         }
 
         public static void RepackFileUHD(string fileFullName)
         {
-            RepackFile(fileFullName, true);
+            RepackFile(fileFullName, IsVersion.IsUHD);
         }
 
-        private static void RepackFile(string fileFullName, bool IsUHD)
+        public static void RepackFilePS4NS(string fileFullName)
         {
+            RepackFile(fileFullName, IsVersion.IsPS4NS);
+        }
+
+        public static void RepackFileGCWII(string fileFullName) 
+        {
+            RepackFile(fileFullName, IsVersion.IsGCWII);
+        }
+
+        public static void RepackFileX360(string fileFullName)
+        {
+            RepackFile(fileFullName, IsVersion.IsX360);
+        }
+
+        private static void RepackFile(string fileFullName, IsVersion version)
+        {
+            Endianness endianness = Endianness.LittleEndian;
+            string effBlobFormat = "EFFBLOB";
+            if (version == IsVersion.IsGCWII || version == IsVersion.IsX360)
+            {
+                endianness = Endianness.BigEndian;
+                effBlobFormat = "EFFBLOBBIG";
+            }
+
             string baseDirectory = Path.GetDirectoryName(fileFullName);
             string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
 
@@ -33,19 +57,19 @@ namespace EFF_SPLIT
                 baseDirectoryPath = Path.Combine(baseDirectory, baseFileName + "_EFF");
             }
 
-            string effBlobPath = Path.Combine(baseDirectoryPath, $"{baseFileName}.EFFBLOB");
+            string effBlobPath = Path.Combine(baseDirectoryPath, $"{baseFileName}.{effBlobFormat}");
             if (!File.Exists(effBlobPath))
             {
-                Console.WriteLine($"{baseFileName}.EFFBLOB, Does not exist.");
+                Console.WriteLine($"{baseFileName}.{effBlobFormat}, Does not exist.");
                 return;
             }
 
-            BinaryReader br = new BinaryReader(File.OpenRead(effBlobPath));
+            EndianBinaryReader br = new EndianBinaryReader(File.OpenRead(effBlobPath), endianness);
             uint Magic = br.ReadUInt32(); //sempre 0x0B
             if (Magic != 0x0B)
             {
                 br.Close();
-                Console.WriteLine($"{baseFileName}.EFFBLOB, Invalid file!");
+                Console.WriteLine($"{baseFileName}.{effBlobFormat}, Invalid file!");
                 return;
             }
 
@@ -67,11 +91,11 @@ namespace EFF_SPLIT
             tables.Table02 = Separate.TableIndexEntry(br, offset_2_EAR_Link, out _);
             tables.Table03 = Separate.TableIndexEntry(br, offset_3_Unknown_Table, out _);
             tables.Table04 = Separate.TableIndexEntry(br, offset_4_Model_IDs, out _);
-            tables.Table06 = Separate.Table06(br, offset_6_Texture_Metadata, out _, IsUHD);
+            tables.Table06 = Separate.Table06(br, offset_6_Texture_Metadata, out _, true);
             tables.Table09 = Separate.Table09(br, offset_9_Paths, out _);
 
-            tables.Table07_Effect_0_Type = Separate.Effect_Type(br, offset_7_Effect_0_Type, out _);
-            tables.Table08_Effect_1_Type = Separate.Effect_Type(br, offset_8_Effect_1_Type, out _);
+            tables.Table07_Effect_0_Type = Separate.Effect_Type(br, offset_7_Effect_0_Type, out _, endianness);
+            tables.Table08_Effect_1_Type = Separate.Effect_Type(br, offset_8_Effect_1_Type, out _, endianness);
 
             br.Close();
 
@@ -83,7 +107,7 @@ namespace EFF_SPLIT
             Join join = new Join(tables);
             join.WriteTable05 = extra.Table05;
             join.WriteTable10 = extra.Table10;
-            join.Create_EFF_File(eff, IsUHD);
+            join.Create_EFF_File(eff, version);
             eff.Close();
 
         }
@@ -93,7 +117,7 @@ namespace EFF_SPLIT
             public string Table05Directory = "";
             public string Table10Directory = "";
 
-            public void Table05(BinaryWriter bw, bool IsUHD)
+            public void Table05(EndianBinaryWriter bw, bool IsPS2)
             {
                 uint offsetTable05 = (uint)bw.BaseStream.Position;
 
@@ -154,7 +178,7 @@ namespace EFF_SPLIT
                 Console.WriteLine("Inserted " + iCount + " Effect TPL;");
             }
 
-            public void Table10(BinaryWriter bw, bool IsUHD)
+            public void Table10(EndianBinaryWriter bw, bool IsPS2)
             {
                 uint offsetTable10 = (uint)bw.BaseStream.Position;
 
@@ -195,10 +219,10 @@ namespace EFF_SPLIT
                     bw.Write(WriteOffset);
                     bw.BaseStream.Position = nextOffset;
 
-                    uint Fixed = IsUHD ? 4u : 2u;
+                    uint Fixed = IsPS2 ? 2u : 4u;
                     bw.Write(Fixed);
                     bw.Write(new byte[12]);
-                    if (IsUHD)
+                    if (IsPS2 == false)
                     {
                         bw.Write(new byte[16]);
                     }

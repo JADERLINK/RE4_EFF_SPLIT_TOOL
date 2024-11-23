@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A8223BB7-8234-4B98-9500-3AA267D421BE}</ProjectGuid>
+    <ProjectGuid>{AAAAF4B5-3789-40DA-A25C-545E08339DDC}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>RE4_PS4NS_EFF_SPLIT</RootNamespace>
-    <AssemblyName>RE4_PS4NS_EFF_SPLIT</AssemblyName>
+    <RootNamespace>RE4_X360_EFF_SPLIT</RootNamespace>
+    <AssemblyName>RE4_X360_EFF_SPLIT</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -35,10 +35,7 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup>
-    <NoWin32Manifest>true</NoWin32Manifest>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>RE4_PS4NS_EFF_SPLIT.Program</StartupObject>
+    <StartupObject>RE4_X360_EFF_SPLIT.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -57,7 +54,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <Import Project="..\EFF_SPLIT\EFF_SPLIT.projitems" Label="Shared" />
   <Import Project="..\SimpleEndianBinaryIO\SimpleEndianBinaryIO.projitems" Label="Shared" />
+  <Import Project="..\EFF_SPLIT\EFF_SPLIT.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
