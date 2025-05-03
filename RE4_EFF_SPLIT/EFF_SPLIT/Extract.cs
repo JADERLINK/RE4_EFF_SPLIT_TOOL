@@ -8,37 +8,7 @@ namespace EFF_SPLIT
 {
     internal static class Extract
     {
-        public static void ExtractFilePS2(string fileFullName) 
-        {
-            ExtractFile(fileFullName, IsVersion.IsPS2);
-            GenerateIdx(fileFullName, "IDX_PS2_EFF_SPLIT", "RE4 PS2 EFF SPLIT");
-        }
-
-        public static void ExtractFileUHD(string fileFullName)
-        {
-            ExtractFile(fileFullName, IsVersion.IsUHD);
-            GenerateIdx(fileFullName, "IDX_UHD_EFF_SPLIT", "RE4 UHD EFF SPLIT");
-        }
-
-        public static void ExtractFilePS4NS(string fileFullName)
-        {
-            ExtractFile(fileFullName, IsVersion.IsPS4NS);
-            GenerateIdx(fileFullName, "IDX_PS4NS_EFF_SPLIT", "RE4 PS4NS EFF SPLIT");
-        }
-
-        public static void ExtractFileGCWII(string fileFullName) 
-        {
-            ExtractFile(fileFullName, IsVersion.IsGCWII);
-            GenerateIdx(fileFullName, "IDX_GCWII_EFF_SPLIT", "RE4 GCWII EFF SPLIT");
-        }
-
-        public static void ExtractFileX360(string fileFullName)
-        {
-            ExtractFile(fileFullName, IsVersion.IsX360);
-            GenerateIdx(fileFullName, "IDX_X360_EFF_SPLIT", "RE4 X360 EFF SPLIT");
-        }
-
-        private static void GenerateIdx(string fileFullName, string idxFormat, string toolName) 
+        public static void GenerateIdx(string fileFullName, string idxFormat, string toolName) 
         {
             string baseDirectory = Path.GetDirectoryName(fileFullName);
             string baseFileName = Path.GetFileNameWithoutExtension(fileFullName);
@@ -51,7 +21,7 @@ namespace EFF_SPLIT
         }
 
 
-        private static void ExtractFile(string fileFullName, IsVersion version) 
+        public static void ExtractFile(string fileFullName, IsVersion version) 
         {
             Endianness endianness = Endianness.LittleEndian;
             string effBlobFormat = "EFFBLOB";
@@ -83,11 +53,11 @@ namespace EFF_SPLIT
                 return;
             }
 
-            uint offset_0_Texture_IDs = br.ReadUInt32();
-            uint offset_1_Effect_IDs = br.ReadUInt32();
-            uint offset_2_EAR_Link = br.ReadUInt32();
-            uint offset_3_Unknown_Table = br.ReadUInt32();
-            uint offset_4_Model_IDs = br.ReadUInt32();
+            uint offset_0_TPL_Texture_IDs = br.ReadUInt32();
+            uint offset_1_Ref_Effect_0_IDs = br.ReadUInt32();
+            uint offset_2_EAR_Links = br.ReadUInt32();
+            uint offset_3_Effect_Path_IDs = br.ReadUInt32();
+            uint offset_4_BIN_Model_IDs = br.ReadUInt32();
             uint offset_5_TPL_Offsets = br.ReadUInt32();
             uint offset_6_Texture_Metadata = br.ReadUInt32();
             uint offset_7_Effect_0_Type = br.ReadUInt32();
@@ -96,11 +66,11 @@ namespace EFF_SPLIT
             uint offset_10_Data_Offset = br.ReadUInt32();
 
             TablesGroup tables = new TablesGroup();
-            tables.Table00 = Separate.TableIndexEntry(br, offset_0_Texture_IDs, out _);
-            tables.Table01 = Separate.TableIndexEntry(br, offset_1_Effect_IDs, out _);
-            tables.Table02 = Separate.TableIndexEntry(br, offset_2_EAR_Link, out _);
-            tables.Table03 = Separate.TableIndexEntry(br, offset_3_Unknown_Table, out _);
-            tables.Table04 = Separate.TableIndexEntry(br, offset_4_Model_IDs, out _);
+            tables.Table00 = Separate.TableIndexEntry(br, offset_0_TPL_Texture_IDs, out _);
+            tables.Table01 = Separate.TableIndexEntry(br, offset_1_Ref_Effect_0_IDs, out _);
+            tables.Table02 = Separate.TableIndexEntry(br, offset_2_EAR_Links, out _);
+            tables.Table03 = Separate.TableIndexEntry(br, offset_3_Effect_Path_IDs, out _);
+            tables.Table04 = Separate.TableIndexEntry(br, offset_4_BIN_Model_IDs, out _);
             tables.Table06 = Separate.Table06(br, offset_6_Texture_Metadata, out _, version != IsVersion.IsPS2);
             tables.Table09 = Separate.Table09(br, offset_9_Paths, out _);
 

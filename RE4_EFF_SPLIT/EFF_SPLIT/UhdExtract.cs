@@ -134,9 +134,9 @@ namespace EFF_SPLIT
             {
                 br.BaseStream.Position = offsets[i] + startOffset;
 
-                ushort width = br.ReadUInt16();
-                ushort height = br.ReadUInt16();
-                uint PixelFormatType = br.ReadUInt32();
+                _ = br.ReadUInt16(); //width or height
+                _ = br.ReadUInt16(); //width or height
+                _ = br.ReadUInt32(); //PixelFormatType
                 uint secundOffset = br.ReadUInt32();
                 // proximos campos omitidos
 

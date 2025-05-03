@@ -6,10 +6,10 @@ namespace EFF_SPLIT
 {
     internal enum IsVersion : byte
     {
-        IsPS2,
+        IsPS2, // and 2007
         IsUHD,
         IsPS4NS,
-        IsX360,
+        IsX360, // and PS3
         IsGCWII
     }
 }

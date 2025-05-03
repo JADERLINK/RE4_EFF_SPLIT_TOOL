@@ -9,32 +9,8 @@ namespace EFF_SPLIT
 {
     internal static class Repack
     {
-        public static void RepackFilePS2(string fileFullName) 
-        {
-            RepackFile(fileFullName, IsVersion.IsPS2);
-        }
-
-        public static void RepackFileUHD(string fileFullName)
-        {
-            RepackFile(fileFullName, IsVersion.IsUHD);
-        }
-
-        public static void RepackFilePS4NS(string fileFullName)
-        {
-            RepackFile(fileFullName, IsVersion.IsPS4NS);
-        }
-
-        public static void RepackFileGCWII(string fileFullName) 
-        {
-            RepackFile(fileFullName, IsVersion.IsGCWII);
-        }
-
-        public static void RepackFileX360(string fileFullName)
-        {
-            RepackFile(fileFullName, IsVersion.IsX360);
-        }
-
-        private static void RepackFile(string fileFullName, IsVersion version)
+      
+        public static void RepackFile(string fileFullName, IsVersion version)
         {
             Endianness endianness = Endianness.LittleEndian;
             string effBlobFormat = "EFFBLOB";
@@ -117,8 +93,10 @@ namespace EFF_SPLIT
             public string Table05Directory = "";
             public string Table10Directory = "";
 
-            public void Table05(EndianBinaryWriter bw, bool IsPS2)
+            public void Table05(EndianBinaryWriter bw, bool IsPS2, bool IsGCWII)
             {
+                uint alignment = IsGCWII ? 32u : 16u;
+
                 uint offsetTable05 = (uint)bw.BaseStream.Position;
 
                 uint iCount = 0;
@@ -139,14 +117,13 @@ namespace EFF_SPLIT
                 }
 
                 bw.Write(iCount); // quantidade
-                uint offsetToOffset = (uint)bw.BaseStream.Position;
+                uint offsetToOffset = (uint)bw.BaseStream.Position; // endereço para o primeiro offset
 
-                uint calc = 4 + (iCount * 4);
-                uint _line = calc / 16;
-                uint rest = calc % 16;
-                _line += rest != 0 ? 1u : 0u;
-                calc = (_line * 16) - 4;
-                bw.Write(new byte[calc]);
+                uint offsetBlockAmount = (iCount * 4); // área reservada para os offsets
+                bw.Write(new byte[offsetBlockAmount]);
+
+                long dif = (alignment - (bw.BaseStream.Position % alignment)) % alignment;
+                bw.Write(new byte[dif]); // alinhamento
 
                 uint nextOffset = (uint)bw.BaseStream.Position;
 
@@ -165,10 +142,7 @@ namespace EFF_SPLIT
                     fileStream.Close();
 
                     //alinhamento
-                    uint aLine = (uint)bw.BaseStream.Position / 16;
-                    uint aRest = (uint)bw.BaseStream.Position % 16;
-                    aLine += aRest != 0 ? 1u : 0u;
-                    int aDif = (int)((aLine * 16) - bw.BaseStream.Position);
+                    long aDif = (alignment - (bw.BaseStream.Position % alignment)) % alignment;
                     bw.Write(new byte[aDif]);
 
                     nextOffset = (uint)bw.BaseStream.Position;
@@ -178,8 +152,10 @@ namespace EFF_SPLIT
                 Console.WriteLine("Inserted " + iCount + " Effect TPL;");
             }
 
-            public void Table10(EndianBinaryWriter bw, bool IsPS2)
+            public void Table10(EndianBinaryWriter bw, bool IsPS2, bool IsGCWII)
             {
+                uint alignment = IsGCWII ? 32u : 16u;
+
                 uint offsetTable10 = (uint)bw.BaseStream.Position;
 
                 uint iCount = 0;
@@ -201,14 +177,13 @@ namespace EFF_SPLIT
                 }
 
                 bw.Write(iCount); // quantidade
-                uint offsetToOffset = (uint)bw.BaseStream.Position;
+                uint offsetToOffset = (uint)bw.BaseStream.Position; // endereço para o primeiro offset
 
-                uint calc = 4 + (iCount * 4);
-                uint _line = calc / 16;
-                uint rest = calc % 16;
-                _line += rest != 0 ? 1u : 0u;
-                calc = (_line * 16) - 4;
-                bw.Write(new byte[calc]);
+                uint offsetBlockAmount = (iCount * 4); // área reservada para os offsets
+                bw.Write(new byte[offsetBlockAmount]);
+
+                long dif = (alignment - (bw.BaseStream.Position % alignment)) % alignment;
+                bw.Write(new byte[dif]); // alinhamento
 
                 uint nextOffset = (uint)bw.BaseStream.Position;
 
@@ -237,10 +212,7 @@ namespace EFF_SPLIT
                         fileStream.Close();
 
                         //alinhamento
-                        uint aLine = (uint)bw.BaseStream.Position / 16;
-                        uint aRest = (uint)bw.BaseStream.Position % 16;
-                        aLine += aRest != 0 ? 1u : 0u;
-                        int aDif = (int)((aLine * 16) - bw.BaseStream.Position);
+                        long aDif = (alignment - (bw.BaseStream.Position % alignment)) % alignment;
                         bw.Write(new byte[aDif]);
                     }
 
@@ -255,10 +227,7 @@ namespace EFF_SPLIT
                         fileStream.Close();
 
                         //alinhamento
-                        uint aLine = (uint)bw.BaseStream.Position / 16;
-                        uint aRest = (uint)bw.BaseStream.Position % 16;
-                        aLine += aRest != 0 ? 1u : 0u;
-                        int aDif = (int)((aLine * 16) - bw.BaseStream.Position);
+                        long aDif = (alignment - (bw.BaseStream.Position % alignment)) % alignment;
                         bw.Write(new byte[aDif]);
                     }
 

@@ -9,7 +9,7 @@ namespace EFF_SPLIT
 {
     internal class Join
     {
-        public delegate void CustomTable(EndianBinaryWriter bw, bool IsPS2);
+        public delegate void CustomTable(EndianBinaryWriter bw, bool IsPS2, bool IsGCWII);
 
         public CustomTable WriteTable05;
         public CustomTable WriteTable10;
@@ -53,8 +53,10 @@ namespace EFF_SPLIT
             uint offsetTable04 = (uint)bw.BaseStream.Position;
             WriteTableIndex(bw, tables.Table04, version == IsVersion.IsPS2);
 
+            AddPadding(bw, version == IsVersion.IsGCWII);
+
             uint offsetTable05 = (uint)bw.BaseStream.Position;
-            WriteTable05(bw, version == IsVersion.IsPS2);
+            WriteTable05(bw, version == IsVersion.IsPS2, version == IsVersion.IsGCWII);
 
             uint offsetTable06 = (uint)bw.BaseStream.Position;
             WriteTable06(bw, tables.Table06, endianness, version == IsVersion.IsPS2);
@@ -68,8 +70,10 @@ namespace EFF_SPLIT
             uint offsetTable09 = (uint)bw.BaseStream.Position;
             WriteTable09(bw, tables.Table09, endianness, version == IsVersion.IsPS2);
 
+            AddPadding(bw, version == IsVersion.IsGCWII);
+
             uint offsetTable10 = (uint)bw.BaseStream.Position;
-            WriteTable10(bw, version == IsVersion.IsPS2);
+            WriteTable10(bw, version == IsVersion.IsPS2, version == IsVersion.IsGCWII);
 
             bw.BaseStream.Position = 4;
             bw.Write(offsetTable00);
@@ -114,17 +118,16 @@ namespace EFF_SPLIT
 
                 uint Length = (uint)Table06.Entries.Length;
                 uint calc = 4 + (Length * 4);
-                uint _line = calc / 16;
-                uint rest = calc % 16;
-                _line += rest != 0 ? 1u : 0u;
-                calc = _line * 16;
+                calc = (uint)((calc + 15) & ~15L);
+
+                uint offset = calc; // o offset tem que ser aqui
+
                 calc += Length * entryByteLength;
                 byte[] res = new byte[calc];
                 EndianBinaryWriter ms = new EndianBinaryWriter(new MemoryStream(res), endianness);
 
                 ms.Write(Length);
                 uint offsetToOffset = 4;
-                uint offset = _line * 16;
 
                 for (int i = 0; i < Table06.Entries.Length; i++)
                 {
@@ -162,19 +165,14 @@ namespace EFF_SPLIT
             {
                 uint Length = (uint)table09.Entries.Length;
                 uint calc = 4 + (Length * 4);
-                uint _line = calc / 16;
-                uint rest = calc % 16;
-                _line += rest != 0 ? 1u : 0u;
-                calc = _line * 16;
+                calc = (uint)((calc + 15) & ~15L);
+                uint offset = calc; // o offset tem que ser aqui
 
                 for (int i = 0; i < Length; i++)
                 {
-                    ushort Length2 = (ushort)table09.Entries[i].Entries.Length;
-                    calc += 4u + (Length2 * 40u);
-                    uint _line2 = calc / 16;
-                    uint rest2 = calc % 16;
-                    _line2 += rest2 != 0 ? 1u : 0u;
-                    calc = _line2 * 16;
+                    ushort entryCount = (ushort)table09.Entries[i].Entries.Length;
+                    calc += 4u + (entryCount * 40u);
+                    calc = (uint)((calc + 15) & ~15L);
                 }
                
                 byte[] res = new byte[calc];
@@ -182,20 +180,19 @@ namespace EFF_SPLIT
 
                 ms.Write(Length);
                 uint offsetToOffset = 4;
-                uint offset = _line * 16;
 
                 for (int i = 0; i < table09.Entries.Length; i++)
                 {
-                    ushort Length2 = (ushort)table09.Entries[i].Entries.Length;
+                    ushort entryCount = (ushort)table09.Entries[i].Entries.Length;
 
                     ms.BaseStream.Position = offsetToOffset;
                     ms.Write(offset);
                     ms.BaseStream.Position = offset;
 
-                    ms.Write(Length2);
+                    ms.Write(entryCount);
                     ms.Write((ushort)0);
 
-                    for (int j = 0; j < Length2; j++)
+                    for (int j = 0; j < entryCount; j++)
                     {
                         ms.Write(table09.Entries[i].Entries[j].Value);
                     }
@@ -226,19 +223,14 @@ namespace EFF_SPLIT
             {
                 uint Length = (uint)table.Groups.Length;
                 uint calc = 4 + (Length * 4);
-                uint _line = calc / 16;
-                uint rest = calc % 16;
-                _line += rest != 0 ? 1u : 0u;
-                calc = _line * 16;
+                calc = (uint)((calc + 15) & ~15L);
+                uint offset = calc; // o offset tem que ser aqui
 
                 for (int i = 0; i < Length; i++)
                 {
-                    ushort Length2 = (ushort)table.Groups[i].Entries.Length;
-                    calc += 48u + (Length2 * 300u);
-                    uint _line2 = calc / 16;
-                    uint rest2 = calc % 16;
-                    _line2 += rest2 != 0 ? 1u : 0u;
-                    calc = _line2 * 16;
+                    ushort entryCount = (ushort)table.Groups[i].Entries.Length;
+                    calc += 48u + (entryCount * 300u);
+                    calc = (uint)((calc + 15) & ~15L);
                 }
 
                 byte[] res = new byte[calc];
@@ -246,7 +238,6 @@ namespace EFF_SPLIT
 
                 ms.Write(Length);
                 uint offsetToOffset = 4;
-                uint offset = _line * 16;
 
                 for (int i = 0; i < table.Groups.Length; i++)
                 {
@@ -285,17 +276,12 @@ namespace EFF_SPLIT
         private void AddPadding(EndianBinaryWriter bw, bool IsExtendedPadding) 
         {
             long _base = IsExtendedPadding ? 32 : 16;
-
             long current = bw.BaseStream.Position;
-            long lines = current / _base;
-            long rest = current % _base;
-            lines += rest != 0 ? 1 : 0;
-            long total = lines * _base;
-            long dif = total - current;
+            long dif = (_base - (current % _base)) % _base;
             bw.Write(new byte[dif]);
         }
 
-        private void CustomTableEmpty(EndianBinaryWriter bw, bool IsPS2) 
+        private void CustomTableEmpty(EndianBinaryWriter bw, bool IsPS2, bool IsGCWII) 
         {
             if (IsPS2)
             {
